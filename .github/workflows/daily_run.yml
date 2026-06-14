@@ -1,0 +1,37 @@
+name: Daily Event Tracker
+
+on:
+  schedule:
+    - cron: '0 9 * * *' # Runs automatically every single day at 9:00 AM UTC
+  workflow_dispatch: # Allows you to press a button to run it manually anytime
+
+jobs:
+  run-tracker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Check out repo code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install libraries
+      run: |
+        pip install requests beautifulsoup4 google-generativeai
+
+    - name: Run the script
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python tracker.py
+
+    - name: Commit and Save the updated list
+      run: |
+        git config --global user.name "EventBot"
+        git config --global user.email "bot@event.com"
+        git add events_list.md
+        git commit -m "Automated Daily Event Update" || exit 0
+        git push
